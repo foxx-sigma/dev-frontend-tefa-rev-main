@@ -3,59 +3,114 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useForm, Controller } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
+
 import { classifyEmail, type EmailClassification } from "../utils/emailClassifier";
 import { authApi } from "@/lib/api";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
+/* ─── Token Warna ──────────────────────────────────────────────────────────── */
+const C = {
+  primary: '#C0272D',
+  primaryDark: '#991B1F',
+  tint: '#FBF7F7',
+  heading: '#1C1C2E',
+  body: '#3B3B58',
+  muted: '#9CA3AF',
+  border: '#E8E6E1',
+  surface: '#FAFAF9',
+} as const;
 
+/* ─── Skema Zod ────────────────────────────────────────────────────────────── */
+const signUpSchema = z
+  .object({
+    fullName: z.string().min(2, "Minimal 2 karakter"),
+    phone: z.string().min(10, "Minimal 10 digit").max(13, "Maksimal 13 digit"),
+    address: z.string().min(5, "Minimal 5 karakter"),
+    postalCode: z.string().length(5, "Kode pos harus 5 digit"),
+    email: z.string().email("Email tidak valid"),
+    password: z.string().min(8, "Minimal 8 karakter"),
+    confirm: z.string(),
+  })
+  .refine((d) => d.password === d.confirm, {
+    message: "Kata sandi tidak sama",
+    path: ["confirm"],
+  });
+
+type SignUpValues = z.infer<typeof signUpSchema>;
+
+/* ─── Komponen Halaman ─────────────────────────────────────────────────────── */
 export default function SignUp() {
   const router = useRouter();
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [classification, setClassification] = useState<EmailClassification | null>(null);
   const [showGoogleModal, setShowGoogleModal] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<SignUpValues>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: {
+      fullName: "",
+      phone: "",
+      address: "",
+      postalCode: "",
+      email: "",
+      password: "",
+      confirm: "",
+    },
+  });
+
+  /* ─── Klasifikasi email secara reaktif ──────────────────────────────────── */
+  const emailValue = watch("email");
 
   useEffect(() => {
-    if (email && email.includes("@")) {
-      setClassification(classifyEmail(email));
-      setError(null);
+    if (emailValue && emailValue.includes("@")) {
+      setClassification(classifyEmail(emailValue));
+      setApiError(null);
     } else {
       setClassification(null);
     }
-  }, [email]);
+  }, [emailValue]);
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (password !== confirm) { setError("Passwords do not match!"); return; }
+  /* ─── Submit ────────────────────────────────────────────────────────────── */
+  const onSubmit = async (data: SignUpValues) => {
+    setApiError(null);
     setLoading(true);
     try {
-      await authApi.register({ 
-        full_name: fullName, 
-        email, 
-        password, 
-        phone, 
-        address, 
-        postal_code: postalCode 
+      await authApi.register({
+        full_name: data.fullName,
+        email: data.email,
+        password: data.password,
+        phone: data.phone,
+        address: data.address,
+        postal_code: data.postalCode,
       });
-      sessionStorage.setItem("pendingVerificationEmail", email);
+      sessionStorage.setItem("pendingVerificationEmail", data.email);
       router.push("/verify-email");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Terjadi kesalahan. Coba beberapa saat lagi.");
+      setApiError(
+        err instanceof Error ? err.message : "Terjadi kesalahan. Coba beberapa saat lagi."
+      );
     } finally {
       setLoading(false);
     }
-  };  
+  };
 
   const handleGoogleContinue = () => {
     setGoogleLoading(true);
@@ -63,139 +118,349 @@ export default function SignUp() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "grid", gridTemplateColumns: "1fr 1fr", overflow: "hidden" }}>
-      <div style={{ background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-        <div className="fi" style={{ padding: "48px 64px", maxWidth: 540, margin: "0 auto", width: "100%" }}>
-          <Link href="/" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 40 }}>
-            <img src="/Logo-SMK Telkom.svg" alt="Logo" style={{ height: 36, width: "auto" }} />
-            <span style={{ fontWeight: 800, fontSize: "1rem", color: "#111" }}>TEFA <span style={{ color: "#e63946" }}>SMK Telkom Malang</span></span>
+    <div className="grid grid-cols-1 md:grid-cols-2 min-h-screen">
+      {/* ══════ PANEL KIRI ══════ */}
+      <div className="bg-white flex flex-col justify-center">
+        <div className="max-w-[480px] mx-auto w-full px-12 py-10 animate-in fade-in slide-in-from-bottom-3 duration-500">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2.5 mb-10 no-underline">
+            <img
+              src="/Logo-SMK Telkom.svg"
+              alt="Logo SMK Telkom"
+              className="h-8 w-auto object-contain"
+            />
+            <span className="font-bold text-[#1C1C2E]">
+              TEFA <span className="text-[#C0272D]">SMK Telkom Malang</span>
+            </span>
           </Link>
-          <h1 style={{ fontSize: "1.8rem", fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 8, color: "#111" }}>Create your account</h1>
-          <p style={{ color: "#6b7280", fontSize: "0.9rem", marginBottom: 28, lineHeight: 1.6 }}>Join TEFA SMK Telkom and start collaborating on real industry projects.</p>
-          <button className="sb" style={{ marginBottom: 24 }} onClick={() => setShowGoogleModal(true)} type="button">
-            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-            Continue with Google
-          </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
-            <div style={{ flex: 1, height: 1, background: "#e5e7eb" }} />
-            <span style={{ color: "#9ca3af", fontSize: "0.8rem", fontWeight: 500 }}>or sign up with email</span>
-            <div style={{ flex: 1, height: 1, background: "#e5e7eb" }} />
+
+          {/* Heading */}
+          <h1 className="text-2xl font-bold text-[#1C1C2E] tracking-tight">
+            Buat Akun Baru
+          </h1>
+          <p className="text-sm text-[#6B6A7A] mt-1.5 mb-7 leading-6">
+            Bergabung dengan TEFA SMK Telkom dan mulai berkolaborasi dalam proyek industri nyata.
+          </p>
+
+          {/* Tombol Google */}
+          <Button
+            variant="outline"
+            className="w-full gap-2 h-11 text-sm font-semibold"
+            type="button"
+            onClick={() => setShowGoogleModal(true)}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+            </svg>
+            Lanjutkan dengan Google
+          </Button>
+
+          {/* Pembatas */}
+          <div className="flex items-center gap-3 my-5">
+            <hr className="flex-1 border-[#E8E6E1]" />
+            <span className="text-xs text-[#9CA3AF]">atau dengan email</span>
+            <hr className="flex-1 border-[#E8E6E1]" />
           </div>
-          <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-            <div>
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#374151", marginBottom: 6 }}>Full Name</label>
-              <input className="ai" type="text" placeholder="John Doe" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+
+          {/* ─── Formulir ─────────────────────────────────────────────────── */}
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            {/* Nama Lengkap */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-[#374151]">Nama Lengkap</Label>
+              <Input
+                type="text"
+                placeholder="Masukkan nama lengkap"
+                className={`h-11 rounded-[10px] border-[1.5px] bg-[#FAFAF9] px-4 text-sm placeholder:text-[#9CA3AF] focus-visible:border-[#C0272D] focus-visible:ring-[#C0272D]/10 ${errors.fullName ? "border-red-500" : "border-[#E8E6E1]"}`}
+                {...register("fullName")}
+              />
+              {errors.fullName && (
+                <p className="text-xs text-red-500 mt-1">{errors.fullName.message}</p>
+              )}
             </div>
-            <div>
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#374151", marginBottom: 6 }}>Phone Number</label>
-              <input className="ai" type="tel" placeholder="081234567890" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+
+            {/* Telepon */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-[#374151]">Nomor Telepon</Label>
+              <Input
+                type="tel"
+                placeholder="081234567890"
+                className={`h-11 rounded-[10px] border-[1.5px] bg-[#FAFAF9] px-4 text-sm placeholder:text-[#9CA3AF] focus-visible:border-[#C0272D] focus-visible:ring-[#C0272D]/10 ${errors.phone ? "border-red-500" : "border-[#E8E6E1]"}`}
+                {...register("phone")}
+              />
+              {errors.phone && (
+                <p className="text-xs text-red-500 mt-1">{errors.phone.message}</p>
+              )}
             </div>
-            <div>
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#374151", marginBottom: 6 }}>Address</label>
-              <input className="ai" type="text" placeholder="Jl. Example No. 123" value={address} onChange={(e) => setAddress(e.target.value)} required />
+
+            {/* Alamat */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-[#374151]">Alamat</Label>
+              <Input
+                type="text"
+                placeholder="Jl. Contoh No. 123"
+                className={`h-11 rounded-[10px] border-[1.5px] bg-[#FAFAF9] px-4 text-sm placeholder:text-[#9CA3AF] focus-visible:border-[#C0272D] focus-visible:ring-[#C0272D]/10 ${errors.address ? "border-red-500" : "border-[#E8E6E1]"}`}
+                {...register("address")}
+              />
+              {errors.address && (
+                <p className="text-xs text-red-500 mt-1">{errors.address.message}</p>
+              )}
             </div>
-            <div>
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#374151", marginBottom: 6 }}>Postal Code</label>
-              <input className="ai" type="text" placeholder="65123" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} required />
+
+            {/* Kode Pos */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-[#374151]">Kode Pos</Label>
+              <Input
+                type="text"
+                placeholder="65123"
+                className={`h-11 rounded-[10px] border-[1.5px] bg-[#FAFAF9] px-4 text-sm placeholder:text-[#9CA3AF] focus-visible:border-[#C0272D] focus-visible:ring-[#C0272D]/10 ${errors.postalCode ? "border-red-500" : "border-[#E8E6E1]"}`}
+                {...register("postalCode")}
+              />
+              {errors.postalCode && (
+                <p className="text-xs text-red-500 mt-1">{errors.postalCode.message}</p>
+              )}
             </div>
-            <div>
-              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#374151", marginBottom: 6 }}>Email Address</label>
-              <input className="ai" type="email" placeholder="you@student.smktelkom-mlg.sch.id" value={email} onChange={(e) => setEmail(e.target.value)} required />
+
+            {/* Email */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-[#374151]">Alamat Email</Label>
+              <Input
+                type="email"
+                placeholder="anda@student.smktelkom-mlg.sch.id"
+                className={`h-11 rounded-[10px] border-[1.5px] bg-[#FAFAF9] px-4 text-sm placeholder:text-[#9CA3AF] focus-visible:border-[#C0272D] focus-visible:ring-[#C0272D]/10 ${errors.email ? "border-red-500" : "border-[#E8E6E1]"}`}
+                {...register("email")}
+              />
+              {errors.email && (
+                <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
+              )}
+              {/* Lencana Klasifikasi Email */}
               {classification && (
-                <div className="badge-appear" style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: 10, fontSize: "0.82rem", fontWeight: 600, background: classification.isInternal ? `${classification.color}12` : "#f3f4f6", color: classification.color, border: `1.5px solid ${classification.color}30` }}>
-                  <span style={{ fontSize: "1rem" }}>{classification.icon}</span>
+                <div
+                  className="mt-2.5 inline-flex items-center gap-2 px-4 py-2 rounded-[10px] text-[0.82rem] font-semibold animate-in fade-in slide-in-from-top-1 duration-300"
+                  style={{
+                    background: classification.isInternal
+                      ? `${classification.color}12`
+                      : "#f3f4f6",
+                    color: classification.color,
+                    border: `1.5px solid ${classification.color}30`,
+                  }}
+                >
+                  <span className="text-base">{classification.icon}</span>
                   <span>{classification.majorLabel}</span>
-                  <span style={{ fontSize: "0.7rem", background: classification.isInternal ? `${classification.color}20` : "#e5e7eb", padding: "2px 8px", borderRadius: 20, fontWeight: 700 }}>{classification.isInternal ? "Telkom Internal" : "External"}</span>
+                  <span
+                    className="text-[0.7rem] px-2 py-0.5 rounded-full font-bold"
+                    style={{
+                      background: classification.isInternal
+                        ? `${classification.color}20`
+                        : "#e5e7eb",
+                    }}
+                  >
+                    {classification.isInternal ? "Internal Telkom" : "Eksternal"}
+                  </span>
                 </div>
               )}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#374151", marginBottom: 6 }}>Password</label>
-                <div style={{ position: "relative" }}>
-                  <input className="ai" type={showPw ? "text" : "password"} placeholder="Min 8 chars" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} style={{ paddingRight: 44 }} />
-                  <button type="button" className="pt" onClick={() => setShowPw(!showPw)} tabIndex={-1}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">{showPw ? <><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><line x1="1" y1="1" x2="23" y2="23"/></> : <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>}</svg>
+
+            {/* Kata Sandi + Konfirmasi (grid 2 kolom) */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Kata Sandi */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-[#374151]">Kata Sandi</Label>
+                <div className="relative">
+                  <Input
+                    type={showPw ? "text" : "password"}
+                    placeholder="Min. 8 karakter"
+                    className={`h-11 rounded-[10px] border-[1.5px] bg-[#FAFAF9] px-4 pr-11 text-sm placeholder:text-[#9CA3AF] focus-visible:border-[#C0272D] focus-visible:ring-[#C0272D]/10 ${errors.password ? "border-red-500" : "border-[#E8E6E1]"}`}
+                    {...register("password")}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#9CA3AF] hover:text-[#374151] transition-colors"
+                    onClick={() => setShowPw(!showPw)}
+                    tabIndex={-1}
+                  >
+                    {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
                 </div>
+                {errors.password && (
+                  <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>
+                )}
               </div>
-              <div>
-                <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#374151", marginBottom: 6 }}>Confirm</label>
-                <input className="ai" type={showPw ? "text" : "password"} placeholder="Re-enter" value={confirm} onChange={(e) => setConfirm(e.target.value)} required minLength={8} />
+
+              {/* Konfirmasi */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-[#374151]">Konfirmasi</Label>
+                <Input
+                  type={showPw ? "text" : "password"}
+                  placeholder="Ulangi sandi"
+                  className={`h-11 rounded-[10px] border-[1.5px] bg-[#FAFAF9] px-4 text-sm placeholder:text-[#9CA3AF] focus-visible:border-[#C0272D] focus-visible:ring-[#C0272D]/10 ${errors.confirm ? "border-red-500" : "border-[#E8E6E1]"}`}
+                  {...register("confirm")}
+                />
+                {errors.confirm && (
+                  <p className="text-xs text-red-500 mt-1">{errors.confirm.message}</p>
+                )}
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-              <input type="checkbox" required style={{ marginTop: 3, accentColor: "#e63946" }} />
-              <span style={{ fontSize: "0.8rem", color: "#6b7280", lineHeight: 1.5 }}>I agree to the <a href="#" style={{ color: "#e63946", textDecoration: "none", fontWeight: 600 }}>Terms of Service</a> and <a href="#" style={{ color: "#e63946", textDecoration: "none", fontWeight: 600 }}>Privacy Policy</a></span>
+
+            {/* Syarat & Ketentuan */}
+            <div className="flex items-start gap-2.5">
+              <Checkbox
+                id="terms"
+                checked={agreed}
+                onCheckedChange={(v) => setAgreed(v === true)}
+                className="mt-0.5"
+              />
+              <Label htmlFor="terms" className="text-xs text-[#6B6A7A] leading-5 font-normal cursor-pointer">
+                Saya menyetujui{" "}
+                <a href="#" className="text-[#C0272D] font-semibold no-underline hover:underline">
+                  Syarat Layanan
+                </a>{" "}
+                dan{" "}
+                <a href="#" className="text-[#C0272D] font-semibold no-underline hover:underline">
+                  Kebijakan Privasi
+                </a>
+              </Label>
             </div>
-            {error && (
-              <div style={{ background: "#fef2f2", border: "1.5px solid #fee2e2", color: "#991b1b", padding: "12px 16px", borderRadius: 10, fontSize: "0.85rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 10 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                {error}
-              </div>
+
+            {/* Error API */}
+            {apiError && (
+              <Alert variant="destructive" className="rounded-[10px]">
+                <AlertCircle className="size-4" />
+                <AlertDescription className="text-sm font-semibold">
+                  {apiError}
+                </AlertDescription>
+              </Alert>
             )}
-            <button className="ab" type="submit" disabled={loading}>
-              {loading ? <><div className="sp" /> Sending verification email...</> : "Create Account"}
-            </button>
+
+            {/* Tombol Kirim */}
+            <Button
+              type="submit"
+              disabled={loading || !agreed}
+              className="w-full h-11 rounded-[10px] text-sm font-bold transition-all duration-200 hover:-translate-y-px hover:shadow-lg disabled:opacity-60"
+              style={{ backgroundColor: C.primary }}
+              onMouseEnter={(e) => {
+                if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = C.primaryDark;
+              }}
+              onMouseLeave={(e) => {
+                if (!e.currentTarget.disabled) e.currentTarget.style.backgroundColor = C.primary;
+              }}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="size-[18px] animate-spin" />
+                  Memverifikasi...
+                </>
+              ) : (
+                "Buat Akun"
+              )}
+            </Button>
           </form>
-          <p style={{ textAlign: "center", marginTop: 24, color: "#6b7280", fontSize: "0.88rem" }}>Already have an account?{" "}<Link href="/sign-in" style={{ color: "#e63946", fontWeight: 700, textDecoration: "none" }}>Sign in</Link></p>
+
+          {/* Footer */}
+          <p className="text-sm text-[#6B6A7A] text-center mt-6">
+            Sudah punya akun?{" "}
+            <Link href="/sign-in" className="text-[#C0272D] font-semibold no-underline hover:underline">
+              Masuk
+            </Link>
+          </p>
         </div>
       </div>
-      <div style={{ background: "linear-gradient(135deg, #e63946 0%, #c1121f 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 64, position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: -60, right: -60, width: 300, height: 300, borderRadius: "50%", background: "rgba(255,255,255,.08)" }} />
-        <div style={{ position: "absolute", bottom: -80, left: -40, width: 340, height: 340, borderRadius: "50%", background: "rgba(255,255,255,.05)" }} />
-        <div style={{ position: "relative", zIndex: 1, textAlign: "center", maxWidth: 400 }}>
-          <div style={{ width: 80, height: 80, background: "rgba(255,255,255,.15)", borderRadius: 22, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 32px", border: "1px solid rgba(255,255,255,.25)", animation: "float 3s ease-in-out infinite" }}>
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+
+      {/* ══════ PANEL KANAN ══════ */}
+      <div
+        className="hidden md:flex flex-col items-center justify-center p-16 relative overflow-hidden"
+        style={{ background: `linear-gradient(135deg, ${C.primary} 0%, ${C.primaryDark} 100%)` }}
+      >
+        {/* Lingkaran Dekoratif */}
+        <div className="absolute -top-16 -right-16 w-[300px] h-[300px] rounded-full bg-white/8" />
+        <div className="absolute -bottom-20 -left-10 w-[340px] h-[340px] rounded-full bg-white/5" />
+        <div className="absolute top-[45%] left-[10%] w-[100px] h-[100px] rounded-full bg-white/6" />
+
+        <div className="relative z-10 text-center max-w-[400px]">
+          {/* Ikon Mengambang */}
+          <div
+            className="w-20 h-20 bg-white/15 rounded-2xl border border-white/25 flex items-center justify-center mx-auto mb-8"
+            style={{ animation: "float 3s ease-in-out infinite" }}
+          >
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
+            </svg>
           </div>
-          <h2 style={{ color: "white", fontSize: "1.8rem", fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 16, lineHeight: 1.3 }}>Start Your Journey<br />With Us Today</h2>
-          <p style={{ color: "rgba(255,255,255,.8)", fontSize: "0.9rem", lineHeight: 1.75, marginBottom: 40 }}>Get hands-on experience with real industry projects and grow with professional mentors.</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, textAlign: "left" }}>
-            {[{ icon: "🎯", text: "Access real industry projects" }, { icon: "👨‍🏫", text: "Learn from professional mentors" }, { icon: "📜", text: "Earn industry certificates" }].map((f) => (
-              <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 14, background: "rgba(255,255,255,.12)", borderRadius: 10, padding: "13px 16px", border: "1px solid rgba(255,255,255,.2)" }}>
-                <span style={{ fontSize: "1.1rem" }}>{f.icon}</span>
-                <span style={{ color: "rgba(255,255,255,.9)", fontSize: "0.88rem", fontWeight: 500 }}>{f.text}</span>
+
+          <h2 className="text-white font-bold text-2xl text-center leading-snug mb-4">
+            Mulai Perjalananmu<br />Bersama Kami
+          </h2>
+          <p className="text-white/80 text-sm text-center leading-7 mb-10">
+            Dapatkan pengalaman langsung dengan proyek industri nyata dan berkembang bersama mentor profesional.
+          </p>
+
+          {/* Daftar Fitur */}
+          <div className="flex flex-col gap-3 w-full">
+            {[
+              { icon: "🎯", text: "Akses proyek industri nyata" },
+              { icon: "👨‍🏫", text: "Belajar dari mentor profesional" },
+              { icon: "📜", text: "Dapatkan sertifikat industri" },
+            ].map((f) => (
+              <div
+                key={f.text}
+                className="bg-white/12 rounded-xl p-4 border border-white/20 flex items-center gap-4"
+              >
+                <span style={{ fontSize: "1.2rem" }}>{f.icon}</span>
+                <span className="text-white/90 text-sm">{f.text}</span>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Animasi Float (scoped style) */}
+        <style>{`
+          @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+          }
+        `}</style>
       </div>
+
+      {/* ══════ MODAL GOOGLE ══════ */}
       {showGoogleModal && (
-        <div className="modal-overlay" onClick={() => setShowGoogleModal(false)}>
-          <div className="modal-card modal-appear" onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#111", marginBottom: 8, textAlign: "center" }}>Sign up with Google?</h3>
-            <p style={{ color: "#6b7280", fontSize: "0.9rem", lineHeight: 1.65, textAlign: "center", marginBottom: 28 }}>Your Google profile will be used to set up your TEFA account.</p>
-            <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={() => setShowGoogleModal(false)} style={{ flex: 1, padding: "13px 20px", border: "1.5px solid #e5e7eb", borderRadius: 10, background: "#fff", color: "#374151", fontWeight: 700, fontSize: "0.9rem", cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-              <button onClick={handleGoogleContinue} disabled={googleLoading} style={{ flex: 1, padding: "13px 20px", border: "none", borderRadius: 10, background: "#e63946", color: "#fff", fontWeight: 700, fontSize: "0.9rem", cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                {googleLoading ? <div className="sp" /> : "Continue"}
-              </button>
+        <div
+          className="fixed inset-0 z-50 bg-black/45 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200"
+          onClick={() => setShowGoogleModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-10 max-w-[440px] w-[90%] shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-3 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-xl font-extrabold text-[#1C1C2E] mb-2 text-center">
+              Daftar dengan Google?
+            </h3>
+            <p className="text-[#6B6A7A] text-sm leading-relaxed text-center mb-7">
+              Profil Google Anda akan digunakan untuk membuat akun TEFA.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 h-11 font-bold"
+                onClick={() => setShowGoogleModal(false)}
+              >
+                Batal
+              </Button>
+              <Button
+                className="flex-1 h-11 font-bold text-white"
+                style={{ backgroundColor: C.primary }}
+                onClick={handleGoogleContinue}
+                disabled={googleLoading}
+              >
+                {googleLoading ? <Loader2 className="size-[18px] animate-spin" /> : "Lanjutkan"}
+              </Button>
             </div>
           </div>
         </div>
       )}
-      <style>{`
-        .ai{width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:14px 16px;font-size:0.9rem;font-family:inherit;outline:none;transition:border-color .2s,box-shadow .2s;background:#fafafa}
-        .ai:focus{border-color:#e63946;box-shadow:0 0 0 3px rgba(230,57,70,.08);background:#fff}
-        .ai::placeholder{color:#9ca3af}
-        .ab{width:100%;background:#e63946;color:#fff;border:none;padding:14px 24px;border-radius:10px;font-weight:700;font-size:0.95rem;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s,transform .1s}
-        .ab:hover{background:#c1121f;transform:translateY(-1px)}
-        .ab:disabled{opacity:.7;cursor:not-allowed;transform:none}
-        .sb{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border:1.5px solid #e5e7eb;border-radius:10px;background:#fff;font-family:inherit;font-size:0.88rem;font-weight:600;color:#374151;cursor:pointer;transition:border-color .2s}
-        .sb:hover{border-color:#e63946;background:#fdf2f2;color:#e63946}
-        .pt{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;padding:4px}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        .sp{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-        .fi{animation:fadeIn .5s ease-out}
-        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-        @keyframes badgeAppear{from{opacity:0;transform:translateY(-4px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
-        .badge-appear{animation:badgeAppear .3s ease-out}
-        .modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center}
-        .modal-card{background:white;border-radius:20px;padding:40px 36px;max-width:440px;width:90%;box-shadow:0 25px 60px rgba(0,0,0,.2)}
-        @keyframes modalAppear{from{opacity:0;transform:scale(.92) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
-        .modal-appear{animation:modalAppear .35s cubic-bezier(.16,1,.3,1)}
-      `}</style>
     </div>
   );
 }

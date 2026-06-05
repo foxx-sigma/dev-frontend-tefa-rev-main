@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Define public routes that don't require authentication
-const publicRoutes = ['/', '/sign-in', '/sign-up'];
+const publicRoutes = ['/', '/sign-in', '/sign-up', '/layanan', '/tentang'];
 
 // Define asset and api prefixes that should bypass the middleware check
 const isAssetOrApi = (path: string) => {

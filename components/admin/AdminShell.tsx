@@ -15,12 +15,12 @@ import TopAppBar from "./TopAppBar";
 
 // ─── NAV CONFIG ─────────────────────────────────────────────────────────────
 const ADMIN_NAV = [
-  { icon: "📊", label: "Dashboard", href: "/contact-supervisor/dashboard" },
-  { icon: "📁", label: "Projects", href: "/contact-supervisor/projects" },
-  { icon: "📦", label: "Inventory", href: "/contact-supervisor/inventory" },
-  { icon: "💰", label: "Financials", href: "/contact-supervisor/financials" },
-  { icon: "👥", label: "Users", href: "/contact-supervisor/users" },
-  { icon: "⚙️", label: "Settings", href: "/contact-supervisor/settings" },
+  { icon: "", label: "Dashboard", href: "/contact-supervisor/dashboard" },
+  { icon: "", label: "Projects", href: "/contact-supervisor/projects" },
+  { icon: "", label: "Inventory", href: "/contact-supervisor/inventory" },
+  { icon: "", label: "Financials", href: "/contact-supervisor/financials" },
+  { icon: "", label: "Users", href: "/contact-supervisor/users" },
+  { icon: "", label: "Settings", href: "/contact-supervisor/settings" },
 ] as const;
 
 // ─── PROPS ──────────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ function AdminSidebar({ onNavClick }: { onNavClick?: () => void }) {
           className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm shrink-0"
           style={{ backgroundColor: colors.primary }}
         >
-          🏫
+          
         </div>
         <div className="min-w-0">
           <div className="font-bold text-[#1C1C2E] text-[0.95rem] leading-tight">
@@ -121,7 +121,7 @@ function AdminSidebar({ onNavClick }: { onNavClick?: () => void }) {
           href="#"
           className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[#6B6A7A] hover:bg-[#F5F4F2] hover:text-[#1C1C2E] text-sm font-medium transition-colors duration-150 no-underline"
         >
-          <span className="text-lg leading-none">🎧</span>
+          <span className="text-lg leading-none"></span>
           Help Center
         </Link>
         <Link

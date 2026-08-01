@@ -25,17 +25,17 @@ interface ApprovalEntry {
 const MOCK_DATA: ApprovalEntry[] = [
   { id: "1",  entityType: "user",    name: "Budi Santoso",         avatar: "BS", category: "Siswa RPL",        date: "28 Jul 2026", status: "Review" },
   { id: "2",  entityType: "user",    name: "Sari Amalia",          avatar: "SA", category: "Guru PG",          date: "27 Jul 2026", status: "Review" },
-  { id: "3",  entityType: "project", name: "Aplikasi Kasir Digital",avatar: "🔧", category: "Proyek RPL",       date: "27 Jul 2026", status: "Running" },
+  { id: "3",  entityType: "project", name: "Aplikasi Kasir Digital",avatar: "AK", category: "Proyek RPL",       date: "27 Jul 2026", status: "Running" },
   { id: "4",  entityType: "user",    name: "Dian Pratama",         avatar: "DP", category: "Siswa TKJ",        date: "26 Jul 2026", status: "Review" },
-  { id: "5",  entityType: "project", name: "Network Monitoring",   avatar: "🔧", category: "Proyek TKJ",       date: "26 Jul 2026", status: "Review" },
+  { id: "5",  entityType: "project", name: "Network Monitoring",   avatar: "", category: "Proyek TKJ",       date: "26 Jul 2026", status: "Review" },
   { id: "6",  entityType: "user",    name: "Rina Wati",            avatar: "RW", category: "Siswa RPL",        date: "25 Jul 2026", status: "Running" },
-  { id: "7",  entityType: "project", name: "Sistem Inventory",     avatar: "🔧", category: "Proyek RPL",       date: "25 Jul 2026", status: "Review" },
+  { id: "7",  entityType: "project", name: "Sistem Inventory",     avatar: "", category: "Proyek RPL",       date: "25 Jul 2026", status: "Review" },
   { id: "8",  entityType: "user",    name: "Ahmad Fauzi",          avatar: "AF", category: "Siswa PG",         date: "24 Jul 2026", status: "Review" },
-  { id: "9",  entityType: "project", name: "Company Profile Web",  avatar: "🏢", category: "Partner Industri", date: "24 Jul 2026", status: "Running" },
+  { id: "9",  entityType: "project", name: "Company Profile Web",  avatar: "", category: "Partner Industri", date: "24 Jul 2026", status: "Running" },
   { id: "10", entityType: "user",    name: "Mega Putri",           avatar: "MP", category: "Siswa TKJ",        date: "23 Jul 2026", status: "Running" },
-  { id: "11", entityType: "project", name: "LMS Platform",         avatar: "🔧", category: "Proyek PG",        date: "23 Jul 2026", status: "Review" },
+  { id: "11", entityType: "project", name: "LMS Platform",         avatar: "", category: "Proyek PG",        date: "23 Jul 2026", status: "Review" },
   { id: "12", entityType: "user",    name: "Yoga Saputra",         avatar: "YS", category: "Guru RPL",         date: "22 Jul 2026", status: "Review" },
-  { id: "13", entityType: "project", name: "IoT Dashboard",        avatar: "🔧", category: "Proyek TKJ",       date: "22 Jul 2026", status: "Running" },
+  { id: "13", entityType: "project", name: "IoT Dashboard",        avatar: "", category: "Proyek TKJ",       date: "22 Jul 2026", status: "Running" },
   { id: "14", entityType: "user",    name: "Lina Marlina",         avatar: "LM", category: "Siswa RPL",        date: "21 Jul 2026", status: "Review" },
 ];
 
@@ -299,7 +299,7 @@ export default function AdminUsersPage() {
           data={paginated}
           keyExtractor={(row) => row.id}
           emptyMessage="Tidak ada entitas yang cocok dengan pencarian Anda"
-          emptyIcon="🔍"
+          emptyIcon=""
         />
 
         {/* Pagination */}

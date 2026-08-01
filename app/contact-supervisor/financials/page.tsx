@@ -190,19 +190,19 @@ export default function AdminFinancialsPage() {
         <StatCard
           label="Total Pemasukan"
           value={formatCurrency(summary.totalIncome)}
-          icon="💰"
+          icon=""
           roleColor="#166534"
         />
         <StatCard
           label="Total Pengeluaran"
           value={formatCurrency(summary.totalExpense)}
-          icon="💸"
+          icon=""
           roleColor="#991B1B"
         />
         <StatCard
           label="Saldo Bersih"
           value={formatCurrency(summary.net)}
-          icon="📊"
+          icon=""
           change={summary.net >= 0 ? "Surplus" : "Defisit"}
           roleColor={roleColor}
         />

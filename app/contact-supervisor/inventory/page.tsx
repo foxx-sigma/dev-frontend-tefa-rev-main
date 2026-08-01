@@ -86,7 +86,7 @@ export default function AdminInventoryPage() {
       render: (row) => (
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 bg-[#FBF7F7]">
-            📦
+            
           </div>
           <span className="font-semibold text-[#1C1C2E] truncate">
             {row.name}
@@ -164,10 +164,10 @@ export default function AdminInventoryPage() {
         style={{ animationDelay: "0.05s" }}
       >
         {[
-          { label: "Total Item", value: stats.total, icon: "📦", color: "#C0272D" },
-          { label: "In Stock", value: stats.inStock, icon: "✅", color: "#166534" },
-          { label: "Low Stock", value: stats.lowStock, icon: "⚠️", color: "#92400E" },
-          { label: "Out of Stock", value: stats.outOfStock, icon: "❌", color: "#991B1B" },
+          { label: "Total Item", value: stats.total, icon: "", color: "#C0272D" },
+          { label: "In Stock", value: stats.inStock, icon: "", color: "#166534" },
+          { label: "Low Stock", value: stats.lowStock, icon: "", color: "#92400E" },
+          { label: "Out of Stock", value: stats.outOfStock, icon: "", color: "#991B1B" },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -228,7 +228,7 @@ export default function AdminInventoryPage() {
           data={paginated}
           keyExtractor={(row) => row.id}
           emptyMessage="Tidak ada item inventaris yang ditemukan"
-          emptyIcon="📦"
+          emptyIcon=""
         />
         <div className="px-5 pb-5">
           <Pagination

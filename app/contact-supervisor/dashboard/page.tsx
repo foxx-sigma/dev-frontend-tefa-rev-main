@@ -8,10 +8,10 @@ import type { StatusType } from "@/components/admin/StatusBadge";
 
 // ─── MOCK DATA ──────────────────────────────────────────────────────────────
 const STATS = [
-  { label: "Menunggu Persetujuan", value: "14", icon: "⏳", change: "+3 minggu ini" },
-  { label: "Proyek Aktif", value: "28", icon: "📁", change: "+5 bulan ini" },
-  { label: "Total Pengguna", value: "156", icon: "👥", change: "+12 baru" },
-  { label: "Mitra Industri", value: "9", icon: "🏢", change: "+2 baru" },
+  { label: "Menunggu Persetujuan", value: "14", icon: "", change: "+3 minggu ini" },
+  { label: "Proyek Aktif", value: "28", icon: "", change: "+5 bulan ini" },
+  { label: "Total Pengguna", value: "156", icon: "", change: "+12 baru" },
+  { label: "Mitra Industri", value: "9", icon: "", change: "+2 baru" },
 ];
 
 interface RecentItem {
@@ -41,7 +41,7 @@ const RECENT_ITEMS: RecentItem[] = [
     description: "Proyek RPL — Tim Alpha",
     status: "Running",
     time: "4 jam lalu",
-    avatar: "📁",
+    avatar: "",
   },
   {
     id: "3",
@@ -59,7 +59,7 @@ const RECENT_ITEMS: RecentItem[] = [
     description: "Proyek TKJ — Tim Bravo",
     status: "Review",
     time: "6 jam lalu",
-    avatar: "📁",
+    avatar: "",
   },
   {
     id: "5",

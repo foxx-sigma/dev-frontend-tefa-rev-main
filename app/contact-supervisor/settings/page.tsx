@@ -169,7 +169,7 @@ export default function AdminSettingsPage() {
               Kelola persetujuan pendaftaran pengguna baru dan tinjau antrian permintaan yang masuk.
             </p>
             <a
-              href="/admin/users"
+              href="/contact-supervisor/users"
               className="flex items-center gap-2 text-sm font-semibold no-underline transition-colors hover:opacity-80"
               style={{ color: roleColor }}
             >

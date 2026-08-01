@@ -119,7 +119,7 @@ export default function AdminDashboard() {
             Antrian Persetujuan Terbaru
           </h2>
           <a
-            href="/admin/users"
+            href="/contact-supervisor/users"
             className="text-sm font-semibold no-underline transition-colors hover:opacity-80"
             style={{ color: roleColor }}
           >

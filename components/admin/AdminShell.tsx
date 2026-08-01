@@ -15,12 +15,12 @@ import TopAppBar from "./TopAppBar";
 
 // ─── NAV CONFIG ─────────────────────────────────────────────────────────────
 const ADMIN_NAV = [
-  { icon: "📊", label: "Dashboard", href: "/admin/dashboard" },
-  { icon: "📁", label: "Projects", href: "/admin/projects" },
-  { icon: "📦", label: "Inventory", href: "/admin/inventory" },
-  { icon: "💰", label: "Financials", href: "/admin/financials" },
-  { icon: "👥", label: "Users", href: "/admin/users" },
-  { icon: "⚙️", label: "Settings", href: "/admin/settings" },
+  { icon: "📊", label: "Dashboard", href: "/contact-supervisor/dashboard" },
+  { icon: "📁", label: "Projects", href: "/contact-supervisor/projects" },
+  { icon: "📦", label: "Inventory", href: "/contact-supervisor/inventory" },
+  { icon: "💰", label: "Financials", href: "/contact-supervisor/financials" },
+  { icon: "👥", label: "Users", href: "/contact-supervisor/users" },
+  { icon: "⚙️", label: "Settings", href: "/contact-supervisor/settings" },
 ] as const;
 
 // ─── PROPS ──────────────────────────────────────────────────────────────────
@@ -101,7 +101,7 @@ function AdminSidebar({ onNavClick }: { onNavClick?: () => void }) {
       {/* 3 ─ Footer: New Project CTA */}
       <div className="px-4 pb-3">
         <Link
-          href="/admin/projects"
+          href="/contact-supervisor/projects"
           className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-all duration-200 hover:opacity-90 no-underline cursor-pointer"
           style={{
             backgroundColor: colors.primary,

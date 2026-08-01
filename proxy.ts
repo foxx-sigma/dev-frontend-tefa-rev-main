@@ -29,10 +29,10 @@ export function proxy(request: NextRequest) {
 
   // If the user is trying to access a protected route without a token
   if (!isPublicRoute && !hasToken) {
-    // Redirect them to the sign-in page
-    const url = request.nextUrl.clone();
-    url.pathname = '/sign-in';
-    return NextResponse.redirect(url);
+    // [DINONAKTIFKAN SEMENTARA] - Server backend mati, biarkan akses masuk ke dashboard
+    // const url = request.nextUrl.clone();
+    // url.pathname = '/sign-in';
+    // return NextResponse.redirect(url);
   }
 
   // Allow public routes to be accessed normally even with a token
